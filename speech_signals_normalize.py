@@ -93,6 +93,7 @@ if __name__ == "__main__":
 
     dataset, labels = get_audio(filenames)
     print(dataset.shape)
+    print(labels.shape)
 
     plt.figure(figsize=(12, 6))
     data, sr = librosa.load(filenames[0], sr=None)
@@ -114,6 +115,10 @@ if __name__ == "__main__":
     print(dataset.shape)
     dataset = get_resize(dataset)
     print(dataset.shape)
+    
+
+    # np.random.shuffle(dataset)
+
     # print(dataset.shape)
     # dataset = get_normalize(dataset)
     # print(dataset.shape)
