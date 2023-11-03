@@ -6,8 +6,11 @@ import librosa
 
 import numpy as np
 from scipy.ndimage import zoom
+from sklearn.preprocessing import LabelBinarizer
 
 import matplotlib.pyplot as plt
+
+import tensorflow as tf
 
 def get_label(file_path):
     labels = []
@@ -88,12 +91,34 @@ def get_resize(dataset, target_height=32, target_width=32):
     resized_ds = np.array([resize_image(batch, target_height, target_width) for batch in dataset])
     return resized_ds
 
+def get_model():
+    model = tf.keras.models.Sequential([
+        tf.keras.layers.Conv2D(32, (3, 3), activation='relu', input_shape=(32, 32, 1)),
+        tf.keras.layers.MaxPooling2D((2, 2)),
+        tf.keras.layers.Conv2D(64, (3, 3), activation='relu'),
+        tf.keras.layers.MaxPooling2D((2, 2)),
+        tf.keras.layers.Conv2D(64, (3, 3), activation='relu'),
+        tf.keras.layers.Flatten(),
+        tf.keras.layers.Dense(64, activation='relu'),
+        tf.keras.layers.Dense(8, activation='softmax')
+    ])
+    model.compile(optimizer='adam',
+                  loss='categorical_crossentropy',
+                  metrics=['accuracy'])
+    return model
+
 if __name__ == "__main__":
     filenames = glob.glob('data/mini_speech_commands/*/*')
 
     dataset, labels = get_audio(filenames)
     print(dataset.shape)
     print(labels.shape)
+    unique_labels = np.unique(labels)
+    print("Unique labels: ", unique_labels)
+
+    label_binarizer = LabelBinarizer()
+    labels = label_binarizer.fit_transform(labels)
+    print("One hot labels shape: ", labels.shape)
 
     plt.figure(figsize=(12, 6))
     data, sr = librosa.load(filenames[0], sr=None)
@@ -110,12 +135,34 @@ if __name__ == "__main__":
     dataset = get_spectrogram(dataset, 256)
     print(dataset.shape)
 
-    
     dataset = get_normalize(dataset)
     print(dataset.shape)
     dataset = get_resize(dataset)
     print(dataset.shape)
+
+    indices = np.arange(len(dataset))
+    np.random.shuffle(indices)
+
+    dataset = dataset[indices]
+    labels = labels[indices]
+
+    split_index = int(len(dataset) * 0.8)
+    train_dataset = dataset[:split_index]
+    train_labels = labels[:split_index]
+    test_dataset = dataset[split_index:]
+    test_labels = labels[split_index:]
+
+    model = get_model()
+    model.summary()
+
+    model.fit(train_dataset, train_labels, epochs=10)
+    save_path = 'speech_signals.h5'
+    model.save(save_path)
     
+    test_loss, test_acc = model.evaluate(test_dataset, test_labels, verbose=2)
+    print('\nTest loss:', test_loss)
+    print('\nTest accuracy:', test_acc)
+
 
     # np.random.shuffle(dataset)
 
