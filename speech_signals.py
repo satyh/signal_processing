@@ -6,13 +6,25 @@ import librosa
 
 import numpy as np
 from scipy.ndimage import zoom
+from sklearn.preprocessing import LabelBinarizer
 import matplotlib.pyplot as plt
 
 def get_label(file_path):
     labels = []
     for directory in glob.glob(file_path):
-        labels.append(directory.split('/')[-1])
+        labels.append(directory.split('/')[-2])
     return labels
+
+labels = get_label('data/mini_speech_commands/*/*')
+labels = np.array(labels)
+print(labels.shape)
+unique_labels = np.unique(labels)
+print(unique_labels)
+
+label_binarizer = LabelBinarizer()
+one_hot_labels = label_binarizer.fit_transform(labels)
+print("One hot labels shape: ", one_hot_labels.shape)
+print("One hot labels: ", one_hot_labels[0:10])
 
 filenames = glob.glob('data/mini_speech_commands/*/*')
 print(filenames[0])
