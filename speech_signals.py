@@ -5,6 +5,7 @@ import wave
 import librosa
 
 import numpy as np
+from scipy.ndimage import zoom
 import matplotlib.pyplot as plt
 
 def get_label(file_path):
@@ -16,6 +17,16 @@ def get_label(file_path):
 filenames = glob.glob('data/mini_speech_commands/*/*')
 print(filenames[0])
 label = filenames[0].split('/')[-2]
+
+for file in filenames:
+    # if not wav file
+    if not file.endswith('.wav'):
+        print(file)
+
+# save file list as csv
+with open('speech_signals.csv', 'w') as f:
+    for file in filenames:
+        f.write(f'{file}\n')
 
 with wave.open(filenames[0], 'rb') as wav_file:
     num_channels = wav_file.getnchannels()
@@ -109,5 +120,50 @@ for i, (ws, spec) in enumerate(zip(window_size, stft_results)):
     fig.colorbar(im, ax=axes[i], orientation='vertical', fraction=0.046, pad=0.04)
 plt.tight_layout()
 plt.savefig('speech_stft_v2.png')
+# plt.show()
+plt.clf()
+
+lengths = []
+for file in filenames:
+    y, sr = librosa.load(file, sr=None)
+    #print(librosa.get_duration(y=y, sr=sr))
+    lengths.append(librosa.get_duration(y=y, sr=sr))
+
+plt.figure(figsize=(12, 6))
+plt.hist(lengths, bins=100)
+plt.xlabel('Duration (s)')
+plt.ylabel('Count')
+plt.title('Speech Signal Duration')
+plt.grid(True)
+plt.savefig('speech_signal_duration.png')
+# plt.show()
+
+def resize_image(image, target_height=32, target_width=32):
+    original_height, original_width = image.shape
+    height_ratio = target_height / original_height
+    width_ratio = target_width / original_width
+    return zoom(image, (height_ratio, width_ratio))
+
+for result in stft_results:
+    h, w = result.shape
+    h = int(h * 3400/fs/2)
+    result = result[0:h, :]
+    print(result.shape)
+
+# plot stft
+fig, axes = plt.subplots(3, 1, figsize=(10, 8))
+for i, (ws, spec) in enumerate(zip(window_size, stft_results)):
+    im = axes[i].imshow(resize_image(spec), 
+                   aspect='auto', 
+                   origin='lower', 
+                   cmap='jet', 
+                   extent=[0, len(data)/fs, 0, fs/2])
+    axes[i].set_title(f'STFT, window size: {ws/fs*1000} ms')
+    axes[i].set_xlabel('Time (s)')
+    axes[i].set_ylabel('Frequency (Hz)')
+    axes[i].set_ylim(0, 3400)
+    fig.colorbar(im, ax=axes[i], orientation='vertical', fraction=0.046, pad=0.04)
+plt.tight_layout()
+plt.savefig('speech_stft_resize_v2.png')
 # plt.show()
 plt.clf()
