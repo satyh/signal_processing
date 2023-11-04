@@ -9,3 +9,5 @@ pip install tensorflow
 pip install matplotlib
 pip install librosa
 pip install numpy
+pip install tqdm
+pip install lyon
