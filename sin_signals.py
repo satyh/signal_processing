@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 
 # define sampling rate and time
 fs = 16000  
-all_time = 2.0  
+all_time = 5.0  
 t = np.arange(0, all_time/4, 1/fs)  
 
 # define signal
@@ -11,7 +11,8 @@ def generate_signal(freq):
     return np.sin(2 * np.pi * freq * t)
 
 # generate signalsS
-signals = [generate_signal(freq) for freq in [10, 25, 50, 100]]
+#signals = [generate_signal(freq) for freq in [10, 25, 50, 100]]
+signals = [generate_signal(freq) for freq in [100, 500, 1000, 5000]]
 
 # concatenate signals
 full_signal = np.concatenate(signals)
@@ -45,14 +46,15 @@ def compute_stft(signal, window_size):
     return spec
 
 # calculate stft
-window_size = [int(fs * ms / 1000) for ms in [25, 125, 375, 1000]]
+#window_size = [int(fs * ms / 1000) for ms in [25, 125, 375, 1000]]
+window_size = [int(fs * ms / 1000) for ms in [25, 125, 375]]
 print(window_size)
 stft_results = [compute_stft(full_signal, size) for size in window_size]
 for result in stft_results:
     print(result.shape)
 
 # plot stft
-fig, axes = plt.subplots(4, 1, figsize=(10, 8))
+fig, axes = plt.subplots(3, 1, figsize=(10, 8))
 for i, (ws, spec) in enumerate(zip(window_size, stft_results)):
     # axes[i].imshow(20 * np.log10(spec), 
     #                aspect='auto', 
@@ -63,11 +65,13 @@ for i, (ws, spec) in enumerate(zip(window_size, stft_results)):
                    aspect='auto', 
                    origin='lower', 
                    cmap='jet', 
-                   extent=[0, len(full_signal)/fs, 0, fs/2])
+                   extent=[0, len(full_signal)/fs, 0, fs/2],
+                   vmin=-10,
+                   vmax=100)
     axes[i].set_title(f'STFT, window size: {ws/fs*1000} ms')
     axes[i].set_xlabel('Time (s)')
     axes[i].set_ylabel('Frequency (Hz)')
-    axes[i].set_ylim(0, 150)
+    #axes[i].set_ylim(0, 20000)
     fig.colorbar(im, ax=axes[i], orientation='vertical', fraction=0.046, pad=0.04)
 plt.tight_layout()
 plt.savefig('stft.png')
@@ -75,7 +79,7 @@ plt.savefig('stft.png')
 plt.clf()
 
 # plot stft (log scale)
-fig, axes = plt.subplots(4, 1, figsize=(10, 8))
+fig, axes = plt.subplots(3, 1, figsize=(10, 8))
 for i, (ws, spec) in enumerate(zip(window_size, stft_results)):
     log_spec = 20 * np.log10(spec)
     im = axes[i].imshow(log_spec, 
@@ -88,7 +92,7 @@ for i, (ws, spec) in enumerate(zip(window_size, stft_results)):
     axes[i].set_title(f'STFT, window size: {ws/fs*1000} ms')
     axes[i].set_xlabel('Time (s)')
     axes[i].set_ylabel('Frequency (Hz)')
-    axes[i].set_ylim(0, 150)
+    #axes[i].set_ylim(0, 20000)
     fig.colorbar(im, ax=axes[i], orientation='vertical', fraction=0.046, pad=0.04)
 plt.tight_layout()
 plt.savefig('stft_log.png')
